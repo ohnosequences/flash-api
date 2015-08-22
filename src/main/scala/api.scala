@@ -35,7 +35,9 @@ case object api {
   trait DefaultOptionValueToSeq extends shapeless.Poly1 {
 
     implicit def default[FO <: AnyFlashOption](implicit option: AnyFlashOption.is[FO]) =
-      at[ValueOf[FO]]{ v: ValueOf[FO] => ( Seq(option.label) ++ option.valueToCmd(v.value) ).filterNot(_.isEmpty) }
+      at[ValueOf[FO]]{ v: ValueOf[FO] =>
+        Seq(option.label) ++ option.valueToCmd(v.value).filterNot(_.isEmpty)
+      }
   }
   case object optionValueToSeq extends DefaultOptionValueToSeq {
 
@@ -84,15 +86,44 @@ case object api {
     case object arguments extends Record(input :&: output :&: □)
 
     type Options = options.type
-    case object options extends Record(minOverlap :&: maxOverlap :&: □)
+    case object options extends Record(
+      minOverlap            :&:
+      maxOverlap            :&:
+      read_len              :&:
+      fragment_len          :&:
+      fragment_len_stddev   :&:
+      threads               :&:
+      allow_outies          :&:
+      phred_offset          :&:
+      cap_mismatch_quals    :&: □
+    )
+
+    lazy val defaults = options(
+      minOverlap(10)            :~:
+      maxOverlap(65)            :~:
+      read_len(100)             :~:
+      fragment_len(180)         :~:
+      fragment_len_stddev(18)   :~:
+      threads(1)                :~:
+      allow_outies(false)       :~:
+      phred_offset(_33)         :~:
+      cap_mismatch_quals(false) :~: ∅
+    )
   }
 
   case object minOverlap          extends FlashOption[Int]( x => Seq(x.toString) )
   case object maxOverlap          extends FlashOption[Int]( x => Seq(x.toString) )
   case object threads             extends FlashOption[Int]( x => Seq(x.toString) )
-  case object readLen             extends FlashOption[Float]( x => Seq(x.toString) )
+  case object read_len            extends FlashOption[Float]( x => Seq(x.toString) )
   case object fragment_len        extends FlashOption[Float]( x => Seq(x.toString) )
   case object fragment_len_stddev extends FlashOption[Float]( x => Seq(x.toString) )
+  case object allow_outies        extends FlashOption[Boolean]( x => Seq() )
+  case object phred_offset        extends FlashOption[PhredOffset]( x => Seq(x.asciiValue.toString) )
+  sealed abstract class PhredOffset(val asciiValue: Int)
+  case object _33 extends PhredOffset(33)
+  case object _64 extends PhredOffset(64)
+  case object cap_mismatch_quals  extends FlashOption[Boolean]( x => Seq() )
+
   /*
     FLASh outputs **5** files:
 

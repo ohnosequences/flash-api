@@ -19,5 +19,11 @@ class CommandGeneration extends FunSuite {
     val uhoh = uh.value mapToList optionValueToSeq
 
     println(uhoh.flatten)
+
+    val opts = flash.defaults
+
+    val optsSeqs = opts.value mapToList optionValueToSeq
+
+    println(optsSeqs.flatten)
   }
 }
