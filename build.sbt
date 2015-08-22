@@ -2,8 +2,11 @@ Nice.scalaProject
 
 name          := "flash"
 organization  := "ohnosequences"
-description   := "flash project"
+description   := "A typesafe Scala API for FLASh"
 
 bucketSuffix  := "era7.com"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.5" % Test
+libraryDependencies ++= Seq(
+  "ohnosequences" %% "cosas"      % "0.7.0-SNAPSHOT",
+  "org.scalatest" %% "scalatest"  % "2.2.5" % Test
+)
