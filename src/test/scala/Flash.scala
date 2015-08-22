@@ -2,15 +2,22 @@ package ohnosequences.flash.test
 
 import org.scalatest.FunSuite
 
-import ohnosequences.flash._
+import ohnosequences.flash._, api._
 
-class FlashTest extends FunSuite {
+import java.io.File
+import ohnosequences.cosas._, typeSets._
 
-  test("Dummy test coming from the template") {
+class CommandGeneration extends FunSuite {
 
-    assert(
+  test("command generation for arguments") {
 
-      12 === 12
+    val uh = flash.arguments(
+      input( FlashInputAt(new File("reads1.fastq"), new File("reads2.fastq")) ) :~:
+      output( FlashOutputAt(new File("/tmp/out"), "sample1") )                  :~: ∅
     )
+
+    val uhoh = uh.value mapToList optionValueToSeq
+
+    println(uhoh.flatten)
   }
 }
