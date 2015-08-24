@@ -1,6 +1,6 @@
 package ohnosequences.flash
 
-import ohnosequences.cosas._, types._, properties._, records._, typeSets._, ops.typeSets.{ CheckForAll, ToList }
+import ohnosequences.cosas._, types._, properties._, records._, typeSets._, ops.typeSets.{ MapToList, CheckForAll, ToList }
 import java.io.File
 import shapeless.poly._
 
@@ -48,6 +48,46 @@ case object api {
       at[ValueOf[output.type]]{ v: ValueOf[output.type] => out.valueToCmd(v.value) }
   }
 
+
+  trait AnyFlashExpression {
+
+    type Command <: AnyFlashCommand
+    val command: Command
+
+    val optionValues: ValueOf[Command#Options]
+    val argumentValues: ValueOf[Command#Arguments]
+  }
+  case class FlashExpression[FC <: AnyFlashCommand](
+    val command: FC)(
+    val argumentValues: ValueOf[FC#Arguments],
+    val optionValues: ValueOf[FC#Options]
+  )
+  extends AnyFlashExpression {
+
+    type Command = FC
+  }
+  case object AnyFlashExpression {
+
+    type is[FE <: AnyFlashExpression] = FE with AnyFlashExpression { type Command = FE#Command }
+  }
+
+  implicit def flashExpressionOps[FE <: AnyFlashExpression](expr: FE): FlashExpressionOps[FE] =
+    FlashExpressionOps(expr)
+  case class FlashExpressionOps[FE <: AnyFlashExpression](val expr: FE) extends AnyVal {
+
+    def cmd(implicit
+      mapArgs: (optionValueToSeq.type MapToList FE#Command#Arguments#Raw) { type O = Seq[String] },
+      mapOpts: (optionValueToSeq.type MapToList FE#Command#Options#Raw) { type O = Seq[String] }
+    ): Seq[String] = {
+
+      val (argsSeqs, optsSeqs): (List[Seq[String]], List[Seq[String]]) = (
+        (expr.argumentValues.value: FE#Command#Arguments#Raw) mapToList optionValueToSeq,
+        (expr.optionValues.value: FE#Command#Options#Raw)     mapToList optionValueToSeq
+      )
+
+      Seq(expr.command.name) ++ argsSeqs.toSeq.flatten ++ optsSeqs.toSeq.flatten
+    }
+  }
 
   // case class FlashStatement[
   //   Cmd <: AnyFlashCommand,
@@ -169,8 +209,4 @@ case object api {
     val pair2: File
   }
   case class FlashInputAt(val pair1: File, val pair2: File) extends FlashInput
-
-
-
-
 }
