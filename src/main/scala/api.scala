@@ -184,8 +184,31 @@ case object api {
     lazy val lengthVisualHistogram  = new File(outputPath, s"${prefix}.histogram")
   }
 
+  // TODO add naive parsers and serializers
+  val intParser: String => Option[Int] = str => {
+      import scala.util.control.Exception._
+      catching(classOf[NumberFormatException]) opt str.toInt
+    }
+
+  type mergedReadLength = mergedReadLength.type
+  case object mergedReadLength extends Property[Int]("mergedReadLength")
+  implicit val parseMergeReadLengthParser: PropertyParser[mergedReadLength,String] =
+    PropertyParser(mergedReadLength, mergedReadLength.label){ intParser }
+  implicit val parseMergeReadLengthSerializer: PropertySerializer[mergedReadLength,String] =
+    PropertySerializer(mergedReadLength, mergedReadLength.label){ v => Some(v.toString) }
+
+  type readNumber = readNumber.type
+  case object readNumber       extends Property[Int]("readNumber")
+  implicit val readNumberParser: PropertyParser[readNumber,String] =
+    PropertyParser(readNumber, readNumber.label){ intParser }
+  implicit val readNumberSerializer: PropertySerializer[readNumber,String] =
+    PropertySerializer(readNumber, readNumber.label){ v => Some(v.toString) }
+
+  // TODO parse from output, use `FlashOutput.lengthNumericHistogram`
+  case object mergedStats extends Record(mergedReadLength :&: readNumber :&: □)
+
   /*
-    We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput` 
+    We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput`
   */
   case object input extends FlashOption[FlashInput]( fin =>
     Seq(fin.pair1.getCanonicalPath.toString, fin.pair2.getCanonicalPath.toString)
