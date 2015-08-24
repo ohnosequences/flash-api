@@ -184,8 +184,14 @@ case object api {
     lazy val lengthVisualHistogram  = new File(outputPath, s"${prefix}.histogram")
   }
 
+  // TODO add naive parsers and serializers
+  case object mergedReadLength extends Property[Int]("mergedReadLength")
+  case object readNumber       extends Property[Int]("readNumber")
+  // TODO parse from output, use `FlashOutput.lengthNumericHistogram`
+  case object mergedStats extends Record(mergedReadLength :&: readNumber :&: □)
+
   /*
-    We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput` 
+    We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput`
   */
   case object input extends FlashOption[FlashInput]( fin =>
     Seq(fin.pair1.getCanonicalPath.toString, fin.pair2.getCanonicalPath.toString)
