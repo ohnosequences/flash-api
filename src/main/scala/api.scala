@@ -1,6 +1,7 @@
 package ohnosequences.flash
 
-import ohnosequences.cosas._, types._, properties._, records._, typeSets._, ops.typeSets.{ MapToList, CheckForAll, ToList }
+import ohnosequences.cosas._, types._, properties._, records._, typeSets._
+import ohnosequences.cosas.ops.typeSets.MapToList
 import java.io.File
 import shapeless.poly._
 
@@ -18,6 +19,7 @@ case object api {
   trait AnyFlashOption extends AnyProperty {
 
     lazy val cmdName: String = toString replace("_", "-")
+    // this is what is used for generating the Seq[String] cmd
     lazy val label: String = s"--${cmdName}"
 
     val valueToCmd: Raw => Seq[String]
@@ -48,7 +50,11 @@ case object api {
       at[ValueOf[output.type]]{ v: ValueOf[output.type] => out.valueToCmd(v.value) }
   }
 
+  /*
+    ### Flash expressions
 
+    Flash expressions are valid commands that can be executed, using the typeclass provided `cmd: Seq[String]` method.
+  */
   trait AnyFlashExpression {
 
     type Command <: AnyFlashCommand
@@ -65,10 +71,6 @@ case object api {
   extends AnyFlashExpression {
 
     type Command = FC
-  }
-  case object AnyFlashExpression {
-
-    type is[FE <: AnyFlashExpression] = FE with AnyFlashExpression { type Command = FE#Command }
   }
 
   implicit def flashExpressionOps[FE <: AnyFlashExpression](expr: FE): FlashExpressionOps[FE] =
@@ -89,36 +91,11 @@ case object api {
     }
   }
 
-  // case class FlashStatement[
-  //   Cmd <: AnyFlashCommand,
-  //   Opts <: AnyTypeSet.Of[AnyFlashOption]
-  // ](
-  //   val command: Cmd,
-  //   val options: Opts
-  // )(implicit
-  //   val ev: CheckForAll[Opts, OptionFor[Cmd]],
-  //   val toListEv: ToListOf[Opts, AnyFlashOption],
-  //   val allArgs: Cmd#Arguments ⊂ Opts
-  // )
-  // {
-  //   def toSeq: Seq[String] =  Seq(command.name) ++
-  //                             ( (options.toListOf[AnyFlashOption]) flatMap { _.toSeq } )
-  // }
-  //
-  // implicit def getFlashCommandOps[BC <: AnyFlashCommand](cmd: BC): FlashCommandOps[BC] =
-  //   FlashCommandOps(cmd)
-  //
-  // case class FlashCommandOps[Cmd <: AnyFlashCommand](val cmd: Cmd) {
-  //
-  //   def withOptions[
-  //     Opts <: AnyTypeSet.Of[AnyFlashOption]
-  //   ](opts: Opts)(implicit
-  //     ev: CheckForAll[Opts, OptionFor[Cmd]],
-  //     toListEv: ToListOf[Opts, AnyFlashOption],
-  //     allArgs: Cmd#Arguments ⊂ Opts
-  //   ): FlashStatement[Cmd,Opts] = FlashStatement(cmd, opts)
-  // }
+  /*
+    ### Flash command instances
 
+    There is just one command part of the Flash suite, called `flash`.
+  */
   type flash = flash.type
   case object flash extends FlashCommand {
 
@@ -151,6 +128,11 @@ case object api {
     )
   }
 
+  /*
+    ### Flash options
+
+    Instances for all `flash` options available.
+  */
   case object minOverlap          extends FlashOption[Int]( x => Seq(x.toString) )
   case object maxOverlap          extends FlashOption[Int]( x => Seq(x.toString) )
   case object threads             extends FlashOption[Int]( x => Seq(x.toString) )
@@ -165,6 +147,8 @@ case object api {
   case object cap_mismatch_quals  extends FlashOption[Boolean]( x => Seq() )
 
   /*
+    ### Flash input and output
+
     FLASh outputs **5** files:
 
     - `out.extendedFrags.fastq`      The merged reads.
@@ -173,7 +157,7 @@ case object api {
     - `out.hist`                     Numeric histogram of merged read lengths.
     - `out.histogram`                Visual histogram of merged read lengths.
 
-    The `out` prefix is configurable.
+    The `out` prefix is configurable. For that you just provide an instance of type `FlashOutput`.
   */
   // this does not correspond directly to a FLASh option, but to a set of them
   case object output extends FlashOption[FlashOutput]( fout =>
@@ -200,6 +184,9 @@ case object api {
     lazy val lengthVisualHistogram  = new File(outputPath, s"${prefix}.histogram")
   }
 
+  /*
+    We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput` 
+  */
   case object input extends FlashOption[FlashInput]( fin =>
     Seq(fin.pair1.getCanonicalPath.toString, fin.pair2.getCanonicalPath.toString)
   )
