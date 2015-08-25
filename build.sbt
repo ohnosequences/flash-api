@@ -8,6 +8,7 @@ bucketSuffix  := "era7.com"
 
 libraryDependencies ++= Seq(
   "ohnosequences"         %% "cosas"      % "0.7.0-SNAPSHOT",
+  "ohnosequences"         %% "datasets"   % "0.1.0-SNAPSHOT",
   "com.github.tototoshi"  %% "scala-csv"  % "1.2.2",
-  "org.scalatest" %% "scalatest"  % "2.2.5" % Test
+  "org.scalatest"         %% "scalatest"  % "2.2.5" % Test
 )
