@@ -204,8 +204,28 @@ case object api {
   implicit val readNumberSerializer: PropertySerializer[readNumber,String] =
     PropertySerializer(readNumber, readNumber.label){ v => Some(v.toString) }
 
-  // TODO parse from output, use `FlashOutput.lengthNumericHistogram`
   case object mergedStats extends Record(mergedReadLength :&: readNumber :&: □)
+
+  case object propertyLabel extends shapeless.Poly1 {
+
+    implicit def default[P <: AnyProperty] = at[P]{ p: P => p.label }
+  }
+
+  implicit def flashOutputOps[FO <: FlashOutput](output: FO): FlashOutputOps[FO] = FlashOutputOps(output)
+  case class FlashOutputOps[FO <: FlashOutput](output: FO) extends AnyVal {
+
+    // TODO better type (File errors etc)
+    def mergeStats: Seq[Either[AnyPropertyParsingError,ValueOf[mergedStats.type]]] = {
+
+      import com.github.tototoshi.csv._
+      val csvReader = CSVReader.open(output.lengthNumericHistogram)(new TSVFormat {})
+
+      def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
+        lines map { line => (headers zip line) toMap }
+
+      rows(csvReader iterator)(mergedStats.properties mapToList propertyLabel) map { mergedStats parseFrom _ } toSeq
+    }
+  }
 
   /*
     We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput`
