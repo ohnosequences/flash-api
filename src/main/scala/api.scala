@@ -206,11 +206,6 @@ case object api {
 
   case object mergedStats extends Record(mergedReadLength :&: readNumber :&: □)
 
-  case object propertyLabel extends shapeless.Poly1 {
-
-    implicit def default[P <: AnyProperty] = at[P]{ p: P => p.label }
-  }
-
   implicit def flashOutputOps[FO <: FlashOutput](output: FO): FlashOutputOps[FO] = FlashOutputOps(output)
   case class FlashOutputOps[FO <: FlashOutput](output: FO) extends AnyVal {
 
@@ -223,7 +218,7 @@ case object api {
       def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
         lines map { line => (headers zip line) toMap }
 
-      rows(csvReader iterator)(mergedStats.properties mapToList propertyLabel) map { mergedStats parseFrom _ } toList
+      rows(csvReader iterator)(mergedStats.properties mapToList typeLabel) map { mergedStats parseFrom _ } toList
     }
   }
 
