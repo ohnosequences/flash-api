@@ -223,7 +223,7 @@ case object api {
       def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
         lines map { line => (headers zip line) toMap }
 
-      rows(csvReader iterator)(mergedStats.properties mapToList propertyLabel) map { mergedStats parseFrom _ } toSeq
+      rows(csvReader iterator)(mergedStats.properties mapToList propertyLabel) map { mergedStats parseFrom _ } toList
     }
   }
 
