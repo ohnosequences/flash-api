@@ -215,7 +215,7 @@ case object api {
   case class FlashOutputOps[FO <: FlashOutput](output: FO) extends AnyVal {
 
     // TODO better type (File errors etc)
-    def mergeStats: Seq[Either[AnyPropertyParsingError,ValueOf[mergedStats.type]]] = {
+    final def stats: Seq[Either[AnyPropertyParsingError,ValueOf[mergedStats.type]]] = {
 
       import com.github.tototoshi.csv._
       val csvReader = CSVReader.open(output.lengthNumericHistogram)(new TSVFormat {})

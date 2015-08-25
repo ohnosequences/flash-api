@@ -16,7 +16,15 @@ class ParseMergeStats extends FunSuite {
       prefix = "out"
     )
 
-    (output mergeStats) map { errOrV =>
+    lazy val readStats = output stats
+
+    val mergedReadsTotal = readStats.foldLeft(0){
+      (accum, next) => next.fold(l => 0, v => accum + (v get readNumber).value )
+    }
+    
+    println(s"total number of merged reads: ${mergedReadsTotal}")
+
+    readStats map { errOrV =>
       errOrV.fold(
         { err => println(s"oh, an error: ${err}") },
         { b: ValueOf[mergedStats.type] => println(s"${b get mergedReadLength show} :~: ${b get readNumber show}") }
