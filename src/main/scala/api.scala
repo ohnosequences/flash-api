@@ -209,8 +209,9 @@ case object api {
   implicit def flashOutputOps[FO <: FlashOutput](output: FO): FlashOutputOps[FO] = FlashOutputOps(output)
   case class FlashOutputOps[FO <: FlashOutput](output: FO) extends AnyVal {
 
+    import ops.typeSets.ParseDenotationsError
     // TODO better type (File errors etc)
-    final def stats: Seq[Either[AnyPropertyParsingError,ValueOf[mergedStats.type]]] = {
+    final def stats: Seq[Either[ParseDenotationsError,ValueOf[mergedStats.type]]] = {
 
       import com.github.tototoshi.csv._
       val csvReader = CSVReader.open(output.lengthNumericHistogram)(new TSVFormat {})
@@ -218,7 +219,7 @@ case object api {
       def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
         lines map { line => (headers zip line) toMap }
 
-      rows(csvReader iterator)(mergedStats.properties mapToList typeLabel) map { mergedStats parseFrom _ } toList
+      rows(csvReader iterator)(mergedStats.properties mapToList typeLabel) map { mergedStats parse _ } toList
     }
   }
 
