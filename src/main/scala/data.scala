@@ -1,12 +1,13 @@
 package ohnosequences.flash
 
-import ohnosequences.datasets._, dataSets._
+import ohnosequences.cosas.types._
+import ohnosequences.datasets._, dataSets._, illumina._
 import api._
 
 case object data {
 
   // data types
-  case object MergedReadStatsType extends AnyDataType {
+  case object MergedReadsStatsType extends AnyDataType {
 
     type Record = mergedStats.type
     val record: Record = mergedStats
@@ -15,30 +16,70 @@ case object data {
   }
 
   // In a future world this could link to the illumina read type
-  trait AnyMergedReadsType extends AnyDataType
+  trait AnyMergedReadsType extends AnyDataType {
+
+    type ReadsType <: AnyReadsType { type EndType = pairedEndType }
+    val readsType: ReadsType
+
+    lazy val label = s"mergedReads.${readsType.label}"
+  }
+  class MergedReadsType[RT <: AnyReadsType { type EndType = pairedEndType }](val readsType: RT)
+  extends AnyMergedReadsType {
+
+    type ReadsType = RT
+  }
 
   // data
-  trait AnyMergedReads extends AnyData {
+  trait AnyMergedReads extends AnyData { mergedReads =>
 
-    type DataType <: AnyMergedReadsType
+    type ReadsType <: AnyReadsType { type EndType = pairedEndType }
+    val readsType: ReadsType
 
-    type FlashExpression <: AnyFlashExpression
-    val flashExpression: FlashExpression
+    type DataType = MergedReadsType[ReadsType]
+    lazy val dataType =  new MergedReadsType(readsType)
+
+    type Reads1 <: reads.AnyPairedEnd1Fastq { type DataType = mergedReads.ReadsType }
+    val reads1: Reads1
+
+    type Reads2 <: reads.AnyPairedEnd2Fastq { type DataType = mergedReads.ReadsType }
+    val reads2: Reads2
+
+    val optionValues: ValueOf[flash#Options]
+
+    lazy val label = s"mergedReads.${reads1.label}.${reads2.label}"
   }
-  abstract class MergedReads[DT <: AnyMergedReadsType, FE <: AnyFlashExpression](
-    val dataType: DT,
-    val flashExpression: FE,
-    val label: String
-  ) extends AnyMergedReads {
+  class MergedReads[
+    RT <: AnyReadsType { type EndType = pairedEndType },
+    R1 <: reads.AnyPairedEnd1Fastq { type DataType = RT },
+    R2 <: reads.AnyPairedEnd2Fastq { type DataType = RT }
+  ]
+  (
+    val readsType: RT,
+    val reads1: R1,
+    val reads2: R2,
+    val optionValues: ValueOf[flash#Options]
+  )
+  extends AnyMergedReads {
 
-    type DataType = DT
-    type FlashExpression = FE
+    type ReadsType = RT
+
+    type Reads1 = R1
+    type Reads2 = R2
   }
 
-  abstract class MergedReadStats(val label: String) extends AnyData {
+  trait AnyMergedReadsStats extends AnyData {
 
-    type DataType = MergedReadStatsType.type
-    val dataType = MergedReadStatsType
+    type DataType = MergedReadsStatsType.type
+    val dataType = MergedReadsStatsType
+
+    type MergedReads <: AnyMergedReads
+    val mergedReads: MergedReads
+
+    lazy val label = s"stats.${mergedReads.label}"
+  }
+  class MergedReadsStats[MR <: AnyMergedReads](val mergedReads: MR) extends AnyMergedReadsStats {
+
+    type MergedReads = MR
   }
 
 }
