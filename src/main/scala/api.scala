@@ -104,8 +104,8 @@ case object api {
 
     type Options = options.type
     case object options extends Record(
-      minOverlap            :&:
-      maxOverlap            :&:
+      min_overlap            :&:
+      max_overlap            :&:
       read_len              :&:
       fragment_len          :&:
       fragment_len_stddev   :&:
@@ -116,8 +116,8 @@ case object api {
     )
 
     lazy val defaults = options(
-      minOverlap(10)            :~:
-      maxOverlap(65)            :~:
+      min_overlap(10)            :~:
+      max_overlap(65)            :~:
       read_len(100)             :~:
       fragment_len(180)         :~:
       fragment_len_stddev(18)   :~:
@@ -133,8 +133,8 @@ case object api {
 
     Instances for all `flash` options available.
   */
-  case object minOverlap          extends FlashOption[Int]( x => Seq(x.toString) )
-  case object maxOverlap          extends FlashOption[Int]( x => Seq(x.toString) )
+  case object min_overlap          extends FlashOption[Int]( x => Seq(x.toString) )
+  case object max_overlap          extends FlashOption[Int]( x => Seq(x.toString) )
   case object threads             extends FlashOption[Int]( x => Seq(x.toString) )
   case object read_len            extends FlashOption[Float]( x => Seq(x.toString) )
   case object fragment_len        extends FlashOption[Float]( x => Seq(x.toString) )
