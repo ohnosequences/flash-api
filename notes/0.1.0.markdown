@@ -1,0 +1,10 @@
+# 0.1.0
+
+First release for the FLASh typesafe Scala API. Main features are
+
+- all FLASh options (but those directly related to in/out behavior) are available.
+- The input/output options have been restricted to providing two `fastq` files comprising a paired-end set for input, and the default `fastq` output. The input and output are *files*, no stdin/stdout options.
+- FLASh expressions, representing the commands that you can execute with FLASh, are completely typesafe. The only possible runtime errors are
+    1. wrong option values, including non-existing input etc (we will work on this as much as possible within the Scala type system constraints)
+    2. flash not installed
+- FLASh expressions will always have the full information about the exact command the represent, including the values of all options (their defaults if they are not modified when building that expression)

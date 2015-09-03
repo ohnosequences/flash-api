@@ -28,11 +28,11 @@ class CommandGeneration extends FunSuite {
         (new File("reads2.fastq")).getCanonicalPath.toString,
         "--output-prefix", "sample1",
         "--output-directory", (new File("/tmp/out")).getCanonicalPath.toString,
-        "--minOverlap", "10",
-        "--maxOverlap", "65",
-        "--read-len", "100.0",
-        "--fragment-len", "180.0",
-        "--fragment-len-stddev", "18.0",
+        "--min-overlap", "10",
+        "--max-overlap", "65",
+        "--read-len", "100",
+        "--fragment-len", "180",
+        "--fragment-len-stddev", "18",
         "--threads", "1",
         "--allow-outies",
         "--phred-offset", "33",
@@ -48,4 +48,6 @@ class CommandGeneration extends FunSuite {
 
 
 [test/scala/CommandGeneration.scala]: CommandGeneration.scala.md
+[test/scala/ParseMergeStats.scala]: ParseMergeStats.scala.md
 [main/scala/api.scala]: ../../main/scala/api.scala.md
+[main/scala/data.scala]: ../../main/scala/data.scala.md
