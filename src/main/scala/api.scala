@@ -104,8 +104,8 @@ case object api {
 
     type Options = options.type
     case object options extends Record(
-      minOverlap            :&:
-      maxOverlap            :&:
+      min_overlap            :&:
+      max_overlap            :&:
       read_len              :&:
       fragment_len          :&:
       fragment_len_stddev   :&:
@@ -116,8 +116,8 @@ case object api {
     )
 
     lazy val defaults = options(
-      minOverlap(10)            :~:
-      maxOverlap(65)            :~:
+      min_overlap(10)            :~:
+      max_overlap(65)            :~:
       read_len(100)             :~:
       fragment_len(180)         :~:
       fragment_len_stddev(18)   :~:
@@ -133,12 +133,12 @@ case object api {
 
     Instances for all `flash` options available.
   */
-  case object minOverlap          extends FlashOption[Int]( x => Seq(x.toString) )
-  case object maxOverlap          extends FlashOption[Int]( x => Seq(x.toString) )
+  case object min_overlap          extends FlashOption[Int]( x => Seq(x.toString) )
+  case object max_overlap          extends FlashOption[Int]( x => Seq(x.toString) )
   case object threads             extends FlashOption[Int]( x => Seq(x.toString) )
-  case object read_len            extends FlashOption[Float]( x => Seq(x.toString) )
-  case object fragment_len        extends FlashOption[Float]( x => Seq(x.toString) )
-  case object fragment_len_stddev extends FlashOption[Float]( x => Seq(x.toString) )
+  case object read_len            extends FlashOption[Int]( x => Seq(x.toString) )
+  case object fragment_len        extends FlashOption[Int]( x => Seq(x.toString) )
+  case object fragment_len_stddev extends FlashOption[Int]( x => Seq(x.toString) )
   case object allow_outies        extends FlashOption[Boolean]( x => Seq() )
   case object phred_offset        extends FlashOption[PhredOffset]( x => Seq(x.asciiValue.toString) )
   sealed abstract class PhredOffset(val asciiValue: Int)
@@ -184,8 +184,47 @@ case object api {
     lazy val lengthVisualHistogram  = new File(outputPath, s"${prefix}.histogram")
   }
 
+  // TODO add naive parsers and serializers
+  val intParser: String => Option[Int] = str => {
+      import scala.util.control.Exception._
+      catching(classOf[NumberFormatException]) opt str.toInt
+    }
+
+  type mergedReadLength = mergedReadLength.type
+  case object mergedReadLength extends Property[Int]("mergedReadLength")
+  implicit val parseMergeReadLengthParser: PropertyParser[mergedReadLength,String] =
+    PropertyParser(mergedReadLength, mergedReadLength.label){ intParser }
+  implicit val parseMergeReadLengthSerializer: PropertySerializer[mergedReadLength,String] =
+    PropertySerializer(mergedReadLength, mergedReadLength.label){ v => Some(v.toString) }
+
+  type readNumber = readNumber.type
+  case object readNumber       extends Property[Int]("readNumber")
+  implicit val readNumberParser: PropertyParser[readNumber,String] =
+    PropertyParser(readNumber, readNumber.label){ intParser }
+  implicit val readNumberSerializer: PropertySerializer[readNumber,String] =
+    PropertySerializer(readNumber, readNumber.label){ v => Some(v.toString) }
+
+  case object mergedStats extends Record(mergedReadLength :&: readNumber :&: □)
+
+  implicit def flashOutputOps[FO <: FlashOutput](output: FO): FlashOutputOps[FO] = FlashOutputOps(output)
+  case class FlashOutputOps[FO <: FlashOutput](output: FO) extends AnyVal {
+
+    import ops.typeSets.ParseDenotationsError
+    // TODO better type (File errors etc)
+    final def stats: Seq[Either[ParseDenotationsError,ValueOf[mergedStats.type]]] = {
+
+      import com.github.tototoshi.csv._
+      val csvReader = CSVReader.open(output.lengthNumericHistogram)(new TSVFormat {})
+
+      def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
+        lines map { line => (headers zip line) toMap }
+
+      rows(csvReader iterator)(mergedStats.properties mapToList typeLabel) map { mergedStats parse _ } toList
+    }
+  }
+
   /*
-    We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput` 
+    We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput`
   */
   case object input extends FlashOption[FlashInput]( fin =>
     Seq(fin.pair1.getCanonicalPath.toString, fin.pair2.getCanonicalPath.toString)
