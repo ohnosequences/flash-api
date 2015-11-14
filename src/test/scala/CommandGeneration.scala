@@ -22,7 +22,7 @@ class CommandGeneration extends FunSuite {
     assert {
       flashExpr.cmd === Seq(
         "flash",
-        (new File("reads1.fas)tq")).getCanonicalPath.toString,
+        (new File("reads1.fastq")).getCanonicalPath.toString,
         (new File("reads2.fastq")).getCanonicalPath.toString,
         "--output-prefix", "sample1",
         "--output-directory", (new File("/tmp/out")).getCanonicalPath.toString,
