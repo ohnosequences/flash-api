@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 import ohnosequences.flash._, api._
 
 import java.io.File
-import ohnosequences.cosas._, typeSets._, types._
+import ohnosequences.cosas._, types._, records._
 
 class ParseMergeStats extends FunSuite {
 

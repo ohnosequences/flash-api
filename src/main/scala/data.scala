@@ -1,7 +1,7 @@
 package ohnosequences.flash
 
-import ohnosequences.cosas.types._
-import ohnosequences.datasets._, dataSets._, illumina._
+import ohnosequences.cosas._, types._
+import ohnosequences.datasets._, illumina._
 import api._
 
 case object data {
@@ -44,7 +44,7 @@ case object data {
     type Reads2 <: reads.AnyPairedEnd2Fastq { type DataType = mergedReads.ReadsType }
     val reads2: Reads2
 
-    val optionValues: ValueOf[flash#Options]
+    val optionValues: flash#Options := flash#Options#Raw
 
     lazy val label = s"mergedReads.${reads1.label}.${reads2.label}"
   }
@@ -57,7 +57,7 @@ case object data {
     val readsType: RT,
     val reads1: R1,
     val reads2: R2,
-    val optionValues: ValueOf[flash#Options]
+    val optionValues: flash#Options := flash#Options#Raw
   )
   extends AnyMergedReads {
 
