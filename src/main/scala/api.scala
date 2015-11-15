@@ -86,45 +86,17 @@ case object api {
       OO <: AnyKList.withBound[Seq[String]]
     ](implicit
       mapArgs: AnyApp1At[MapKListOf[optionValueToSeq.type,Seq[String]], FE#ValArgs] { type Y = AO },
-      mapOpts: AnyApp1At[MapKListOf[optionValueToSeq.type,Seq[String]], FE#ValOpt] { type Y = OO },
-      tlarg: App1[toListOf[AO,Seq[String]], AO, List[Seq[String]]],
-      tlopt: App1[toListOf[OO,Seq[String]], OO, List[Seq[String]]]
+      mapOpts: AnyApp1At[MapKListOf[optionValueToSeq.type,Seq[String]], FE#ValOpt] { type Y = OO }
     )
     : Seq[String] = {
 
-      // val argsSeqs = mapArgs(argumentValues.value)
-
       val (argsSeqs, optsSeqs): (List[Seq[String]], List[Seq[String]]) = (
-        KList(optionValueToSeq)(expr.argumentValues.value: FE#ValArgs).toListOf[Seq[String]],
-        KList(optionValueToSeq)(expr.optionValues.value: FE#ValOpt).toListOf[Seq[String]]
+        KList(optionValueToSeq)(expr.argumentValues.value: FE#ValArgs).asList,
+        KList(optionValueToSeq)(expr.optionValues.value: FE#ValOpt).asList
       )
 
       Seq(expr.command.name) ++ argsSeqs.toSeq.flatten ++ optsSeqs.toSeq.flatten
     }
-
-    // TODO map for klist
-    // def cmd[
-    //   AO <: AnyKList.withBound[Seq[String]],
-    //   OO <: AnyKList.withBound[Seq[String]]
-    // ](implicit
-    //   mapArgs: AnyApp1At[MapKListOf[optionValueToSeq.type, AnyDenotation, Seq[String]], FE#Command#Arguments := FE#Command#Arguments#Keys#Raw] { type Y = AO },
-    //   mapOpts: AnyApp1At[mapKList[optionValueToSeq.type], FE#Command#Options := FE#Command#Options#Keys#Raw] { type Y = OO }
-    // )
-    // : Seq[String] = {
-    //
-    //   val argsSeqs = mapArgs((expr: FE).argumentValues)
-    //
-    //   // val (argsSeqs, optsSeqs): (List[Seq[String]], List[Seq[String]]) = (
-    //   //
-    //   //   KList(optionValueToSeq)(expr.optionValues).toList
-    //   //   // (expr.argumentValues.value: FE#Command#Arguments#Raw) mapToList optionValueToSeq,
-    //   //   // (expr.optionValues.value: FE#Command#Options#Raw)     mapToList optionValueToSeq
-    //   // )
-    //
-    //   // Seq(expr.command.name) ++ argsSeqs.toSeq.flatten ++ optsSeqs.toSeq.flatten
-    //
-    //   ???
-    // }
   }
 
   /*
