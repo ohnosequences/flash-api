@@ -1,7 +1,7 @@
 package ohnosequences.flash
 
 import ohnosequences.cosas._, types._, records._, fns._, klists._
-import java.io.File
+import better.files._
 
 case object api {
 
@@ -170,7 +170,7 @@ case object api {
   // this does not correspond directly to a FLASh option, but to a set of them
   case object output extends FlashOption[FlashOutput]( fout =>
     Seq("--output-prefix", fout.prefix) ++
-    Seq("--output-directory", fout.outputPath.getCanonicalPath.toString)
+    Seq("--output-directory", fout.outputPath.path.toString)
   )
   sealed trait FlashOutput {
 
@@ -185,11 +185,11 @@ case object api {
   }
   case class FlashOutputAt(val outputPath: File, val prefix: String) extends FlashOutput {
 
-    lazy val mergedReads            = new File(outputPath, s"${prefix}.extendedFrags.fastq")
-    lazy val pair1NotMerged         = new File(outputPath, s"${prefix}.notCombined_1.fastq")
-    lazy val pair2NotMerged         = new File(outputPath, s"${prefix}.notCombined_2.fastq")
-    lazy val lengthNumericHistogram = new File(outputPath, s"${prefix}.hist")
-    lazy val lengthVisualHistogram  = new File(outputPath, s"${prefix}.histogram")
+    lazy val mergedReads: File            = outputPath / s"${prefix}.extendedFrags.fastq"
+    lazy val pair1NotMerged: File         = outputPath / s"${prefix}.notCombined_1.fastq"
+    lazy val pair2NotMerged: File         = outputPath / s"${prefix}.notCombined_2.fastq"
+    lazy val lengthNumericHistogram: File = outputPath / s"${prefix}.hist"
+    lazy val lengthVisualHistogram: File  = outputPath / s"${prefix}.histogram"
   }
 
   // TODO add naive parsers and serializers
@@ -226,7 +226,7 @@ case object api {
     ] = {
 
       import com.github.tototoshi.csv._
-      val csvReader = CSVReader.open(output.lengthNumericHistogram)(new TSVFormat {})
+      val csvReader = CSVReader.open(output.lengthNumericHistogram.toJava)(new TSVFormat {})
 
       def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
         lines map { line => (headers zip line) toMap }
@@ -239,7 +239,7 @@ case object api {
     We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput`
   */
   case object input extends FlashOption[FlashInput]( fin =>
-    Seq(fin.pair1.getCanonicalPath.toString, fin.pair2.getCanonicalPath.toString)
+    Seq(fin.pair1.path.toString, fin.pair2.path.toString)
   )
   sealed trait FlashInput {
 
