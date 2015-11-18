@@ -1,9 +1,7 @@
 package ohnosequences.flash
 
-import ohnosequences.cosas._, types._, properties._, records._, typeSets._
-import ohnosequences.cosas.ops.typeSets.MapToList
-import java.io.File
-import shapeless.poly._
+import ohnosequences.cosas._, types._, records._, fns._, klists._
+import better.files._
 
 case object api {
 
@@ -11,12 +9,12 @@ case object api {
 
     lazy val name: String = toString
 
-    type Arguments  <: AnyRecord { type PropertySet <: AnyPropertySet.withBound[AnyFlashOption] }
-    type Options    <: AnyRecord { type PropertySet <: AnyPropertySet.withBound[AnyFlashOption] }
+    type Arguments  <: AnyRecordType { type Keys <: AnyProductType { type Bound <: AnyFlashOption } }
+    type Options    <: AnyRecordType { type Keys <: AnyProductType { type Bound <: AnyFlashOption } }
   }
   abstract class FlashCommand extends AnyFlashCommand
 
-  trait AnyFlashOption extends AnyProperty {
+  trait AnyFlashOption extends AnyType {
 
     lazy val cmdName: String = toString replace("_", "-")
     // this is what is used for generating the Seq[String] cmd
@@ -26,7 +24,7 @@ case object api {
   }
   abstract class FlashOption[V](val valueToCmd: V => Seq[String]) extends AnyFlashOption { type Raw = V }
 
-  object AnyFlashOption {
+  case object AnyFlashOption {
     type is[FO <: AnyFlashOption] = FO with AnyFlashOption { type Raw = FO#Raw }
   }
   /*
@@ -34,20 +32,21 @@ case object api {
 
     for command values we generate a `Seq[String]` which is valid command expression that you can execute (assuming FLASh installed) using `scala.sys.process` or anything similar.
   */
-  trait DefaultOptionValueToSeq extends shapeless.Poly1 {
+  trait DefaultOptionValueToSeq extends DepFn1[Any, Seq[String]] {
 
-    implicit def default[FO <: AnyFlashOption](implicit option: AnyFlashOption.is[FO]) =
-      at[ValueOf[FO]]{ v: ValueOf[FO] =>
-        Seq(option.label) ++ option.valueToCmd(v.value).filterNot(_.isEmpty)
-      }
+    implicit def default[FO <: AnyFlashOption, V <: FO#Raw](implicit
+      option: FO with AnyFlashOption { type Raw = FO#Raw }
+    )
+    : AnyApp1At[optionValueToSeq.type, FO := V] { type Y = Seq[String] }=
+      App1 { v: FO := V => Seq(option.label) ++ option.valueToCmd(v.value).filterNot(_.isEmpty) }
   }
   case object optionValueToSeq extends DefaultOptionValueToSeq {
 
-    implicit def atInput(implicit option: input.type) =
-      at[ValueOf[input.type]]{ v: ValueOf[input.type] => option.valueToCmd(v.value) }
+    implicit def atInput[V <: input.Raw]: AnyApp1At[optionValueToSeq.type, input.type := V] { type Y  = Seq[String] } =
+      App1 { v: input.type := V => input.valueToCmd(v.value) }
 
-    implicit def atOutput(implicit out: output.type) =
-      at[ValueOf[output.type]]{ v: ValueOf[output.type] => out.valueToCmd(v.value) }
+    implicit def atOutput[V <: output.Raw]: AnyApp1At[optionValueToSeq.type, output.type := V]  { type Y = Seq[String] } =
+      App1 { v: output.type := V => output.valueToCmd(v.value) }
   }
 
   /*
@@ -57,34 +56,43 @@ case object api {
   */
   trait AnyFlashExpression {
 
-    type Command <: AnyFlashCommand
-    val command: Command
+    type Command = flash
+    val command: Command = flash
 
-    val optionValues: ValueOf[Command#Options]
-    val argumentValues: ValueOf[Command#Arguments]
+    type ValArgs <: flash.Arguments#Raw
+    type ValOpt <: flash.Options#Raw
+
+    val argumentValues: flash.Arguments := ValArgs
+    val optionValues: flash.Options := ValOpt
   }
-  case class FlashExpression[FC <: AnyFlashCommand](
-    val command: FC)(
-    val argumentValues: ValueOf[FC#Arguments],
-    val optionValues: ValueOf[FC#Options]
+  case class FlashExpression[
+    AV <: flash.Arguments#Raw,
+    OV <: flash.Options#Raw
+  ](
+    val argumentValues: flash.Arguments := AV,
+    val optionValues: flash.Options := OV
   )
   extends AnyFlashExpression {
 
-    type Command = FC
+    type ValArgs = AV; type ValOpt = OV
   }
 
   implicit def flashExpressionOps[FE <: AnyFlashExpression](expr: FE): FlashExpressionOps[FE] =
     FlashExpressionOps(expr)
   case class FlashExpressionOps[FE <: AnyFlashExpression](val expr: FE) extends AnyVal {
 
-    def cmd(implicit
-      mapArgs: (optionValueToSeq.type MapToList FE#Command#Arguments#Raw) { type O = Seq[String] },
-      mapOpts: (optionValueToSeq.type MapToList FE#Command#Options#Raw) { type O = Seq[String] }
-    ): Seq[String] = {
+    def cmd[
+      AO <: AnyKList.withBound[Seq[String]],
+      OO <: AnyKList.withBound[Seq[String]]
+    ](implicit
+      mapArgs: AnyApp1At[MapKListOf[optionValueToSeq.type,Seq[String]], FE#ValArgs] { type Y = AO },
+      mapOpts: AnyApp1At[MapKListOf[optionValueToSeq.type,Seq[String]], FE#ValOpt] { type Y = OO }
+    )
+    : Seq[String] = {
 
       val (argsSeqs, optsSeqs): (List[Seq[String]], List[Seq[String]]) = (
-        (expr.argumentValues.value: FE#Command#Arguments#Raw) mapToList optionValueToSeq,
-        (expr.optionValues.value: FE#Command#Options#Raw)     mapToList optionValueToSeq
+        KList(optionValueToSeq)(expr.argumentValues.value: FE#ValArgs).asList,
+        KList(optionValueToSeq)(expr.optionValues.value: FE#ValOpt).asList
       )
 
       Seq(expr.command.name) ++ argsSeqs.toSeq.flatten ++ optsSeqs.toSeq.flatten
@@ -100,31 +108,31 @@ case object api {
   case object flash extends FlashCommand {
 
     type Arguments = arguments.type
-    case object arguments extends Record(input :&: output :&: □)
+    case object arguments extends RecordType(input :×: output :×: In[AnyFlashOption])
 
     type Options = options.type
-    case object options extends Record(
-      min_overlap            :&:
-      max_overlap            :&:
-      read_len              :&:
-      fragment_len          :&:
-      fragment_len_stddev   :&:
-      threads               :&:
-      allow_outies          :&:
-      phred_offset          :&:
-      cap_mismatch_quals    :&: □
+    case object options extends RecordType(
+      min_overlap            :×:
+      max_overlap            :×:
+      read_len              :×:
+      fragment_len          :×:
+      fragment_len_stddev   :×:
+      threads               :×:
+      allow_outies          :×:
+      phred_offset          :×:
+      cap_mismatch_quals    :×: In[AnyFlashOption]
     )
 
     lazy val defaults = options(
-      min_overlap(10)            :~:
-      max_overlap(65)            :~:
-      read_len(100)             :~:
-      fragment_len(180)         :~:
-      fragment_len_stddev(18)   :~:
-      threads(1)                :~:
-      allow_outies(false)       :~:
-      phred_offset(_33)         :~:
-      cap_mismatch_quals(false) :~: ∅
+      min_overlap(10)           ::
+      max_overlap(65)           ::
+      read_len(100)             ::
+      fragment_len(180)         ::
+      fragment_len_stddev(18)   ::
+      threads(1)                ::
+      allow_outies(false)       ::
+      phred_offset(_33)         ::
+      cap_mismatch_quals(false) :: *[AnyDenotation]
     )
   }
 
@@ -162,7 +170,7 @@ case object api {
   // this does not correspond directly to a FLASh option, but to a set of them
   case object output extends FlashOption[FlashOutput]( fout =>
     Seq("--output-prefix", fout.prefix) ++
-    Seq("--output-directory", fout.outputPath.getCanonicalPath.toString)
+    Seq("--output-directory", fout.outputPath.path.toString)
   )
   sealed trait FlashOutput {
 
@@ -177,11 +185,11 @@ case object api {
   }
   case class FlashOutputAt(val outputPath: File, val prefix: String) extends FlashOutput {
 
-    lazy val mergedReads            = new File(outputPath, s"${prefix}.extendedFrags.fastq")
-    lazy val pair1NotMerged         = new File(outputPath, s"${prefix}.notCombined_1.fastq")
-    lazy val pair2NotMerged         = new File(outputPath, s"${prefix}.notCombined_2.fastq")
-    lazy val lengthNumericHistogram = new File(outputPath, s"${prefix}.hist")
-    lazy val lengthVisualHistogram  = new File(outputPath, s"${prefix}.histogram")
+    lazy val mergedReads: File            = outputPath / s"${prefix}.extendedFrags.fastq"
+    lazy val pair1NotMerged: File         = outputPath / s"${prefix}.notCombined_1.fastq"
+    lazy val pair2NotMerged: File         = outputPath / s"${prefix}.notCombined_2.fastq"
+    lazy val lengthNumericHistogram: File = outputPath / s"${prefix}.hist"
+    lazy val lengthVisualHistogram: File  = outputPath / s"${prefix}.histogram"
   }
 
   // TODO add naive parsers and serializers
@@ -191,35 +199,39 @@ case object api {
     }
 
   type mergedReadLength = mergedReadLength.type
-  case object mergedReadLength extends Property[Int]("mergedReadLength")
-  implicit val parseMergeReadLengthParser: PropertyParser[mergedReadLength,String] =
-    PropertyParser(mergedReadLength, mergedReadLength.label){ intParser }
-  implicit val parseMergeReadLengthSerializer: PropertySerializer[mergedReadLength,String] =
-    PropertySerializer(mergedReadLength, mergedReadLength.label){ v => Some(v.toString) }
+  case object mergedReadLength extends Type[Int]("mergedReadLength")
+  implicit val parseMergeReadLengthParser: DenotationParser[mergedReadLength,Int,String] =
+    new DenotationParser(mergedReadLength, mergedReadLength.label)(intParser)
+  implicit val parseMergeReadLengthSerializer: DenotationSerializer[mergedReadLength,Int,String] =
+    new DenotationSerializer(mergedReadLength, mergedReadLength.label)({ v => Some(v.toString) })
 
   type readNumber = readNumber.type
-  case object readNumber       extends Property[Int]("readNumber")
-  implicit val readNumberParser: PropertyParser[readNumber,String] =
-    PropertyParser(readNumber, readNumber.label){ intParser }
-  implicit val readNumberSerializer: PropertySerializer[readNumber,String] =
-    PropertySerializer(readNumber, readNumber.label){ v => Some(v.toString) }
+  case object readNumber       extends Type[Int]("readNumber")
+  implicit val readNumberParser: DenotationParser[readNumber,Int,String] =
+    new DenotationParser(readNumber, readNumber.label)(intParser)
+  implicit val readNumberSerializer: DenotationSerializer[readNumber,Int,String] =
+    new DenotationSerializer(readNumber, readNumber.label)({ v => Some(v.toString) })
 
-  case object mergedStats extends Record(mergedReadLength :&: readNumber :&: □)
+  case object mergedStats extends RecordType(mergedReadLength :×: readNumber :×: In[AnyType])
 
   implicit def flashOutputOps[FO <: FlashOutput](output: FO): FlashOutputOps[FO] = FlashOutputOps(output)
   case class FlashOutputOps[FO <: FlashOutput](output: FO) extends AnyVal {
 
-    import ops.typeSets.ParseDenotationsError
     // TODO better type (File errors etc)
-    final def stats: Seq[Either[ParseDenotationsError,ValueOf[mergedStats.type]]] = {
+    final def stats: Seq[
+      Either[
+        ParseDenotationsError,
+        mergedStats.type := ( (mergedReadLength.type := Int) :: (readNumber := Int) :: *[AnyDenotation] )
+      ]
+    ] = {
 
       import com.github.tototoshi.csv._
-      val csvReader = CSVReader.open(output.lengthNumericHistogram)(new TSVFormat {})
+      val csvReader = CSVReader.open(output.lengthNumericHistogram.toJava)(new TSVFormat {})
 
       def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
         lines map { line => (headers zip line) toMap }
 
-      rows(csvReader iterator)(mergedStats.properties mapToList typeLabel) map { mergedStats parse _ } toList
+      rows(csvReader iterator)( KList(typeLabel)(mergedStats.keys.types).toList ) map { mergedStats parse _ } toList
     }
   }
 
@@ -227,7 +239,7 @@ case object api {
     We are restricting Flash input to be provided as a pair of `fastq` files, specified through a value of type `FlashInput`
   */
   case object input extends FlashOption[FlashInput]( fin =>
-    Seq(fin.pair1.getCanonicalPath.toString, fin.pair2.getCanonicalPath.toString)
+    Seq(fin.pair1.path.toString, fin.pair2.path.toString)
   )
   sealed trait FlashInput {
 
