@@ -34,7 +34,7 @@ class ParseMergeStats extends FunSuite {
 
 
 
-[test/scala/CommandGeneration.scala]: CommandGeneration.scala.md
-[test/scala/ParseMergeStats.scala]: ParseMergeStats.scala.md
 [main/scala/api.scala]: ../../main/scala/api.scala.md
 [main/scala/data.scala]: ../../main/scala/data.scala.md
+[test/scala/CommandGeneration.scala]: CommandGeneration.scala.md
+[test/scala/ParseMergeStats.scala]: ParseMergeStats.scala.md
