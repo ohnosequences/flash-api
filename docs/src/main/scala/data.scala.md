@@ -91,7 +91,7 @@ case object data {
 
 
 
-[test/scala/CommandGeneration.scala]: ../../test/scala/CommandGeneration.scala.md
-[test/scala/ParseMergeStats.scala]: ../../test/scala/ParseMergeStats.scala.md
 [main/scala/api.scala]: api.scala.md
 [main/scala/data.scala]: data.scala.md
+[test/scala/CommandGeneration.scala]: ../../test/scala/CommandGeneration.scala.md
+[test/scala/ParseMergeStats.scala]: ../../test/scala/ParseMergeStats.scala.md
