@@ -85,14 +85,14 @@ case object api {
       AO <: AnyKList.withBound[Seq[String]],
       OO <: AnyKList.withBound[Seq[String]]
     ](implicit
-      mapArgs: AnyApp1At[MapKListOf[optionValueToSeq.type,Seq[String]], FE#ValArgs] { type Y = AO },
-      mapOpts: AnyApp1At[MapKListOf[optionValueToSeq.type,Seq[String]], FE#ValOpt] { type Y = OO }
+      mapArgs: AnyApp2At[mapKList[optionValueToSeq.type, Seq[String]], optionValueToSeq.type, FE#ValArgs] { type Y = AO },
+      mapOpts: AnyApp2At[mapKList[optionValueToSeq.type, Seq[String]], optionValueToSeq.type, FE#ValOpt] { type Y = OO }
     )
     : Seq[String] = {
 
       val (argsSeqs, optsSeqs): (List[Seq[String]], List[Seq[String]]) = (
-        KList(optionValueToSeq)(expr.argumentValues.value: FE#ValArgs).asList,
-        KList(optionValueToSeq)(expr.optionValues.value: FE#ValOpt).asList
+        (expr.argumentValues.value: FE#ValArgs) map optionValueToSeq asList,
+        (expr.optionValues.value: FE#ValOpt) map optionValueToSeq asList
       )
 
       Seq(expr.command.name) ++ argsSeqs.toSeq.flatten ++ optsSeqs.toSeq.flatten
@@ -108,7 +108,7 @@ case object api {
   case object flash extends FlashCommand {
 
     type Arguments = arguments.type
-    case object arguments extends RecordType(input :×: output :×: In[AnyFlashOption])
+    case object arguments extends RecordType(input :×: output :×: |[AnyFlashOption])
 
     type Options = options.type
     case object options extends RecordType(
@@ -120,7 +120,7 @@ case object api {
       threads               :×:
       allow_outies          :×:
       phred_offset          :×:
-      cap_mismatch_quals    :×: In[AnyFlashOption]
+      cap_mismatch_quals    :×: |[AnyFlashOption]
     )
 
     lazy val defaults = options(
@@ -212,7 +212,7 @@ case object api {
   implicit val readNumberSerializer: DenotationSerializer[readNumber,Int,String] =
     new DenotationSerializer(readNumber, readNumber.label)({ v => Some(v.toString) })
 
-  case object mergedStats extends RecordType(mergedReadLength :×: readNumber :×: In[AnyType])
+  case object mergedStats extends RecordType(mergedReadLength :×: readNumber :×: |[AnyType])
 
   implicit def flashOutputOps[FO <: FlashOutput](output: FO): FlashOutputOps[FO] = FlashOutputOps(output)
   case class FlashOutputOps[FO <: FlashOutput](output: FO) extends AnyVal {
@@ -231,7 +231,9 @@ case object api {
       def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
         lines map { line => (headers zip line) toMap }
 
-      rows(csvReader iterator)( KList(typeLabel)(mergedStats.keys.types).toList ) map { mergedStats parse _ } toList
+      rows(csvReader iterator)(
+        mergedStats.keys.types map typeLabel toList 
+      ) map { mergedStats parse _ } toList
     }
   }
 
