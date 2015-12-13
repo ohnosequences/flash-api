@@ -18,12 +18,12 @@ case object data {
   // In a future world this could link to the illumina read type
   trait AnyMergedReadsType extends AnyDataType {
 
-    type ReadsType <: AnyReadsType { type EndType = pairedEndType }
+    type ReadsType <: AnyReadsType { type EndType = PairedEndType }
     val readsType: ReadsType
 
     lazy val label = s"mergedReads.${readsType.label}"
   }
-  class MergedReadsType[RT <: AnyReadsType { type EndType = pairedEndType }](val readsType: RT)
+  class MergedReadsType[RT <: AnyReadsType { type EndType = PairedEndType }](val readsType: RT)
   extends AnyMergedReadsType {
 
     type ReadsType = RT
@@ -32,7 +32,7 @@ case object data {
   // data
   trait AnyMergedReads extends AnyData { mergedReads =>
 
-    type ReadsType <: AnyReadsType { type EndType = pairedEndType }
+    type ReadsType <: AnyReadsType { type EndType = PairedEndType }
     val readsType: ReadsType
 
     type DataType = MergedReadsType[ReadsType]
@@ -49,7 +49,7 @@ case object data {
     lazy val label = s"mergedReads.${reads1.label}.${reads2.label}"
   }
   class MergedReads[
-    RT <: AnyReadsType { type EndType = pairedEndType },
+    RT <: AnyReadsType { type EndType = PairedEndType },
     R1 <: reads.AnyPairedEnd1Fastq { type DataType = RT },
     R2 <: reads.AnyPairedEnd2Fastq { type DataType = RT }
   ]

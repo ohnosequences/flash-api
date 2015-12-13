@@ -9,8 +9,8 @@ case object api {
 
     lazy val name: String = toString
 
-    type Arguments  <: AnyRecordType { type Keys <: AnyProductType { type Bound <: AnyFlashOption } }
-    type Options    <: AnyRecordType { type Keys <: AnyProductType { type Bound <: AnyFlashOption } }
+    type Arguments <: AnyRecordType { type Keys <: AnyProductType { type Types <: AnyKList { type Bound <: AnyFlashOption } } }
+    type Options   <: AnyRecordType { type Keys <: AnyProductType { type Types <: AnyKList { type Bound <: AnyFlashOption } } }
   }
   abstract class FlashCommand extends AnyFlashCommand
 
@@ -232,7 +232,7 @@ case object api {
         lines map { line => (headers zip line) toMap }
 
       rows(csvReader iterator)(
-        mergedStats.keys.types map typeLabel toList 
+        mergedStats.keys.types map typeLabel toList
       ) map { mergedStats parse _ } toList
     }
   }
