@@ -6,28 +6,28 @@ import org.scalatest.FunSuite
 
 import ohnosequences.flash._, api._
 
-import java.io.File
-import ohnosequences.cosas._, typeSets._
+import better.files._
+import ohnosequences.cosas._, types._, klists._
 
 class CommandGeneration extends FunSuite {
 
   test("command generation for Flash expressions") {
 
-    val flashExpr = FlashExpression(flash)(
+    val flashExpr = FlashExpression(
       flash.arguments(
-        input( FlashInputAt(new File("reads1.fastq"), new File("reads2.fastq")) ) :~:
-        output( FlashOutputAt(new File("/tmp/out"), "sample1") )                  :~: ∅
+        (input   := FlashInputAt(File("reads1.fastq"), File("reads2.fastq")) ) ::
+        (output  := FlashOutputAt(File("/tmp/out"), "sample1")               ) :: *[AnyDenotation]
       ),
-      flash.defaults update (allow_outies(true) :~: ∅)
+      flash.defaults update (allow_outies(true) :: *[AnyDenotation])
     )
 
     assert {
       flashExpr.cmd === Seq(
         "flash",
-        (new File("reads1.fastq")).getCanonicalPath.toString,
-        (new File("reads2.fastq")).getCanonicalPath.toString,
+        File("reads1.fastq").path.toString,
+        File("reads2.fastq").path.toString,
         "--output-prefix", "sample1",
-        "--output-directory", (new File("/tmp/out")).getCanonicalPath.toString,
+        "--output-directory", File("/tmp/out").path.toString,
         "--min-overlap", "10",
         "--max-overlap", "65",
         "--read-len", "100",
@@ -47,7 +47,7 @@ class CommandGeneration extends FunSuite {
 
 
 
-[main/scala/api.scala]: ../../main/scala/api.scala.md
-[main/scala/data.scala]: ../../main/scala/data.scala.md
 [test/scala/CommandGeneration.scala]: CommandGeneration.scala.md
 [test/scala/ParseMergeStats.scala]: ParseMergeStats.scala.md
+[main/scala/api.scala]: ../../main/scala/api.scala.md
+[main/scala/data.scala]: ../../main/scala/data.scala.md

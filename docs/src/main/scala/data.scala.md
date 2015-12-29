@@ -2,8 +2,8 @@
 ```scala
 package ohnosequences.flash
 
-import ohnosequences.cosas.types._
-import ohnosequences.datasets._, dataSets._, illumina._
+import ohnosequences.cosas._, types._
+import ohnosequences.datasets._, illumina._
 import api._
 
 case object data {
@@ -20,12 +20,12 @@ case object data {
   // In a future world this could link to the illumina read type
   trait AnyMergedReadsType extends AnyDataType {
 
-    type ReadsType <: AnyReadsType { type EndType = pairedEndType }
+    type ReadsType <: AnyReadsType { type EndType = PairedEndType }
     val readsType: ReadsType
 
     lazy val label = s"mergedReads.${readsType.label}"
   }
-  class MergedReadsType[RT <: AnyReadsType { type EndType = pairedEndType }](val readsType: RT)
+  class MergedReadsType[RT <: AnyReadsType { type EndType = PairedEndType }](val readsType: RT)
   extends AnyMergedReadsType {
 
     type ReadsType = RT
@@ -34,7 +34,7 @@ case object data {
   // data
   trait AnyMergedReads extends AnyData { mergedReads =>
 
-    type ReadsType <: AnyReadsType { type EndType = pairedEndType }
+    type ReadsType <: AnyReadsType { type EndType = PairedEndType }
     val readsType: ReadsType
 
     type DataType = MergedReadsType[ReadsType]
@@ -46,12 +46,12 @@ case object data {
     type Reads2 <: reads.AnyPairedEnd2Fastq { type DataType = mergedReads.ReadsType }
     val reads2: Reads2
 
-    val optionValues: ValueOf[flash#Options]
+    val optionValues: flash#Options := flash#Options#Raw
 
     lazy val label = s"mergedReads.${reads1.label}.${reads2.label}"
   }
   class MergedReads[
-    RT <: AnyReadsType { type EndType = pairedEndType },
+    RT <: AnyReadsType { type EndType = PairedEndType },
     R1 <: reads.AnyPairedEnd1Fastq { type DataType = RT },
     R2 <: reads.AnyPairedEnd2Fastq { type DataType = RT }
   ]
@@ -59,7 +59,7 @@ case object data {
     val readsType: RT,
     val reads1: R1,
     val reads2: R2,
-    val optionValues: ValueOf[flash#Options]
+    val optionValues: flash#Options := flash#Options#Raw
   )
   extends AnyMergedReads {
 
@@ -91,7 +91,7 @@ case object data {
 
 
 
-[main/scala/api.scala]: api.scala.md
-[main/scala/data.scala]: data.scala.md
 [test/scala/CommandGeneration.scala]: ../../test/scala/CommandGeneration.scala.md
 [test/scala/ParseMergeStats.scala]: ../../test/scala/ParseMergeStats.scala.md
+[main/scala/api.scala]: api.scala.md
+[main/scala/data.scala]: data.scala.md
