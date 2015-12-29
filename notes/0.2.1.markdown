@@ -1,0 +1,5 @@
+A summary of changes
+
+- update to ohnosequences/cosas `0.8.0`
+- update to ohnosequences/datasets `0.2.0`
+- use better-files instead of `java.io.File`
