@@ -277,7 +277,6 @@ We are restricting Flash input to be provided as a pair of `fastq` files, specif
 
 
 
+[main/scala/api.scala]: api.scala.md
 [test/scala/CommandGeneration.scala]: ../../test/scala/CommandGeneration.scala.md
 [test/scala/ParseMergeStats.scala]: ../../test/scala/ParseMergeStats.scala.md
-[main/scala/api.scala]: api.scala.md
-[main/scala/data.scala]: data.scala.md
