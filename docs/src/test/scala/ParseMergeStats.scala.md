@@ -3,18 +3,16 @@
 package ohnosequences.flash.test
 
 import org.scalatest.FunSuite
-
 import ohnosequences.flash._, api._
-
-import better.files._
 import ohnosequences.cosas._, types._, records._
+import java.io._
 
 class ParseMergeStats extends FunSuite {
 
   test("can get mergeStats record values from output file") {
 
     val output = FlashOutputAt(
-      outputPath = File("."),
+      outputPath = new File("."),
       prefix = "out"
     )
 

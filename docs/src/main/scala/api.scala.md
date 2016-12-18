@@ -3,7 +3,9 @@
 package ohnosequences.flash
 
 import ohnosequences.cosas._, types._, records._, fns._, klists._
-import better.files._
+import scala.collection.JavaConversions._
+import java.nio.file.Files
+import java.io._
 
 case object api {
 
@@ -188,7 +190,7 @@ The `out` prefix is configurable. For that you just provide an instance of type 
   // this does not correspond directly to a FLASh option, but to a set of them
   case object output extends FlashOption[FlashOutput]( fout =>
     Seq("--output-prefix", fout.prefix) ++
-    Seq("--output-directory", fout.outputPath.path.toString)
+    Seq("--output-directory", fout.outputPath.getCanonicalPath)
   )
   sealed trait FlashOutput {
 
@@ -203,11 +205,11 @@ The `out` prefix is configurable. For that you just provide an instance of type 
   }
   case class FlashOutputAt(val outputPath: File, val prefix: String) extends FlashOutput {
 
-    lazy val mergedReads: File            = outputPath / s"${prefix}.extendedFrags.fastq"
-    lazy val pair1NotMerged: File         = outputPath / s"${prefix}.notCombined_1.fastq"
-    lazy val pair2NotMerged: File         = outputPath / s"${prefix}.notCombined_2.fastq"
-    lazy val lengthNumericHistogram: File = outputPath / s"${prefix}.hist"
-    lazy val lengthVisualHistogram: File  = outputPath / s"${prefix}.histogram"
+    lazy val mergedReads: File            = new File(s"${outputPath}/${prefix}.extendedFrags.fastq")
+    lazy val pair1NotMerged: File         = new File(s"${outputPath}/${prefix}.notCombined_1.fastq")
+    lazy val pair2NotMerged: File         = new File(s"${outputPath}/${prefix}.notCombined_2.fastq")
+    lazy val lengthNumericHistogram: File = new File(s"${outputPath}/${prefix}.hist")
+    lazy val lengthVisualHistogram: File  = new File(s"${outputPath}/${prefix}.histogram")
   }
 
   // TODO add naive parsers and serializers
@@ -236,22 +238,22 @@ The `out` prefix is configurable. For that you just provide an instance of type 
   case class FlashOutputOps[FO <: FlashOutput](output: FO) extends AnyVal {
 
     // TODO better type (File errors etc)
-    final def stats: Seq[
+    final def stats: Iterator[
       Either[
         ParseDenotationsError,
         mergedStats.type := ( (mergedReadLength.type := Int) :: (readNumber := Int) :: *[AnyDenotation] )
       ]
     ] = {
 
-      import com.github.tototoshi.csv._
-      val csvReader = CSVReader.open(output.lengthNumericHistogram.toJava)(new TSVFormat {})
+      val header: Seq[String] = mergedStats.keys.types map typeLabel toList
 
-      def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
-        lines map { line => (headers zip line) toMap }
+      Files
+        .lines(output.lengthNumericHistogram.toPath).iterator
+        .map { str: String =>
 
-      rows(csvReader iterator)(
-        mergedStats.keys.types map typeLabel toList
-      ) map { mergedStats parse _ } toList
+          val row: Seq[String] = str.split('\t')
+          mergedStats parse (header zip row).toMap
+        }
     }
   }
 ```
@@ -262,7 +264,7 @@ We are restricting Flash input to be provided as a pair of `fastq` files, specif
 
 ```scala
   case object input extends FlashOption[FlashInput]( fin =>
-    Seq(fin.pair1.path.toString, fin.pair2.path.toString)
+    Seq(fin.pair1.getCanonicalPath, fin.pair2.getCanonicalPath)
   )
   sealed trait FlashInput {
 

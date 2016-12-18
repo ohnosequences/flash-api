@@ -3,11 +3,9 @@
 package ohnosequences.flash.test
 
 import org.scalatest.FunSuite
-
 import ohnosequences.flash._, api._
-
-import better.files._
 import ohnosequences.cosas._, types._, klists._
+import java.io._
 
 class CommandGeneration extends FunSuite {
 
@@ -15,8 +13,8 @@ class CommandGeneration extends FunSuite {
 
     val flashExpr = FlashExpression(
       flash.arguments(
-        (input   := FlashInputAt(File("reads1.fastq"), File("reads2.fastq")) ) ::
-        (output  := FlashOutputAt(File("/tmp/out"), "sample1")               ) :: *[AnyDenotation]
+        (input   := FlashInputAt(new File("reads1.fastq"), new File("reads2.fastq")) ) ::
+        (output  := FlashOutputAt(new File("/tmp/out"), "sample1")               ) :: *[AnyDenotation]
       ),
       flash.defaults update (allow_outies(true) :: *[AnyDenotation])
     )
@@ -24,10 +22,10 @@ class CommandGeneration extends FunSuite {
     assert {
       flashExpr.cmd === Seq(
         "flash",
-        File("reads1.fastq").path.toString,
-        File("reads2.fastq").path.toString,
+        new File("reads1.fastq").getCanonicalPath,
+        new File("reads2.fastq").getCanonicalPath,
         "--output-prefix", "sample1",
-        "--output-directory", File("/tmp/out").path.toString,
+        "--output-directory", new File("/tmp/out").getCanonicalPath,
         "--min-overlap", "10",
         "--max-overlap", "65",
         "--read-len", "100",
