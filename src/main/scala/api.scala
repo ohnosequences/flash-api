@@ -225,13 +225,10 @@ case object api {
       ]
     ] = {
 
-      import com.github.tototoshi.csv._
-      val csvReader = CSVReader.open(output.lengthNumericHistogram.toJava)(new TSVFormat {})
-
       def rows(lines: Iterator[Seq[String]])(headers: Seq[String]): Iterator[Map[String,String]] =
         lines map { line => (headers zip line) toMap }
 
-      rows(csvReader iterator)(
+      rows(output.lengthNumericHistogram.lines.map(_.split('\t')))(
         mergedStats.keys.types map typeLabel toList
       ) map { mergedStats parse _ } toList
     }
