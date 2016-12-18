@@ -5,8 +5,7 @@ description   := "A typesafe Scala API for FLASh"
 bucketSuffix  := "era7.com"
 
 libraryDependencies ++= Seq(
-  "ohnosequences"         %% "cosas"        % "0.8.0",
-  "com.github.pathikrit"  %% "better-files" % "2.13.0"
+  "ohnosequences" %% "cosas" % "0.8.0"
 )
 
 // NOTE should be reestablished
