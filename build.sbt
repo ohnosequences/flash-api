@@ -1,4 +1,4 @@
-name          := "flash"
+name          := "flash-api"
 organization  := "ohnosequences"
 description   := "A typesafe Scala API for FLASh"
 
