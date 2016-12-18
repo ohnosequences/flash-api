@@ -187,11 +187,11 @@ case object api {
   }
   case class FlashOutputAt(val outputPath: File, val prefix: String) extends FlashOutput {
 
-    lazy val mergedReads: File            = new File(s"outputPath/${prefix}.extendedFrags.fastq")
-    lazy val pair1NotMerged: File         = new File(s"outputPath/${prefix}.notCombined_1.fastq")
-    lazy val pair2NotMerged: File         = new File(s"outputPath/${prefix}.notCombined_2.fastq")
-    lazy val lengthNumericHistogram: File = new File(s"outputPath/${prefix}.hist")
-    lazy val lengthVisualHistogram: File  = new File(s"outputPath/${prefix}.histogram")
+    lazy val mergedReads: File            = new File(s"${outputPath}/${prefix}.extendedFrags.fastq")
+    lazy val pair1NotMerged: File         = new File(s"${outputPath}/${prefix}.notCombined_1.fastq")
+    lazy val pair2NotMerged: File         = new File(s"${outputPath}/${prefix}.notCombined_2.fastq")
+    lazy val lengthNumericHistogram: File = new File(s"${outputPath}/${prefix}.hist")
+    lazy val lengthVisualHistogram: File  = new File(s"${outputPath}/${prefix}.histogram")
   }
 
   // TODO add naive parsers and serializers
