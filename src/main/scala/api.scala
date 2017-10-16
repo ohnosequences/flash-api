@@ -1,7 +1,7 @@
 package ohnosequences.flash
 
 import ohnosequences.cosas._, types._, records._, fns._, klists._
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import java.nio.file.Files
 import java.io._
 
@@ -230,7 +230,8 @@ case object api {
       val header: Seq[String] = mergedStats.keys.types map typeLabel toList
 
       Files
-        .lines(output.lengthNumericHistogram.toPath).iterator
+        .lines(output.lengthNumericHistogram.toPath)
+        .iterator.asScala
         .map { str: String =>
 
           val row: Seq[String] = str.split('\t')
