@@ -40,9 +40,6 @@ case object flash extends AnyFlashCommand {
   case object options extends RecordType(
     min_overlap         :×:
     max_overlap         :×:
-    read_len            :×:
-    fragment_len        :×:
-    fragment_len_stddev :×:
     threads             :×:
     allow_outies        :×:
     phred_offset        :×:
@@ -53,9 +50,6 @@ case object flash extends AnyFlashCommand {
   type OptionsVals =
     (min_overlap.type         := min_overlap.Raw)         ::
     (max_overlap.type         := max_overlap.Raw)         ::
-    (read_len.type            := read_len.Raw)            ::
-    (fragment_len.type        := fragment_len.Raw)        ::
-    (fragment_len_stddev.type := fragment_len_stddev.Raw) ::
     (threads.type             := threads.Raw)             ::
     (allow_outies.type        := allow_outies.Raw)        ::
     (phred_offset.type        := phred_offset.Raw)        ::
@@ -65,9 +59,6 @@ case object flash extends AnyFlashCommand {
   val defaults: Options := OptionsVals = options(
     min_overlap(10)           ::
     max_overlap(65)           ::
-    read_len(100)             ::
-    fragment_len(180)         ::
-    fragment_len_stddev(18)   ::
     threads(1)                ::
     allow_outies(false)       ::
     phred_offset(_33)         ::
