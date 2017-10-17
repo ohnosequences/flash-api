@@ -2,7 +2,6 @@ package ohnosequences.flash.test
 
 import org.scalatest.FunSuite
 import ohnosequences.flash._, api._
-import ohnosequences.cosas._, types._, records._
 import java.io._
 
 class ParseMergeStats extends FunSuite {
@@ -17,7 +16,7 @@ class ParseMergeStats extends FunSuite {
     lazy val readStats = output stats
 
     val mergedReadsTotal = readStats.foldLeft(0){
-      (accum, next) => next.fold(l => 0, v => accum + (v get readNumber).value )
+      (accum, next) => next.fold(l => 0, v => accum + (v get FlashOutput.readNumber).value )
     }
 
     assert { mergedReadsTotal === 96479 }
