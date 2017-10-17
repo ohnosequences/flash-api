@@ -29,7 +29,7 @@ case object AnyFlashOption {
 
   for command values we generate a `Seq[String]` which is valid command expression that you can execute (assuming FLASh installed) using `scala.sys.process` or anything similar.
 */
-case object optionValueToSeq extends DepFn1[AnyDenotation, Seq[String]] {
+trait DefaultOptionValueToSeq extends DepFn1[AnyDenotation, Seq[String]] {
 
   implicit def default[
     V,
@@ -42,6 +42,9 @@ case object optionValueToSeq extends DepFn1[AnyDenotation, Seq[String]] {
   } = App1 { v =>
     Seq(v.tpe.label) ++ v.tpe.valueToCmd(v.value).filterNot(_.isEmpty)
   }
+}
+
+case object optionValueToSeq extends DefaultOptionValueToSeq {
 
   implicit def atInput[
     V <: input.Raw

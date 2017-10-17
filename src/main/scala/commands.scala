@@ -74,4 +74,13 @@ case object flash extends AnyFlashCommand {
     cap_mismatch_quals(false) ::
     *[AnyDenotation]
   )
+
+  def apply(
+    argumentValues: ArgumentsVals,
+    optionValues: OptionsVals
+  ): FlashExpression[this.type] =
+    FlashExpression(this)(
+      argumentValues,
+      optionValues
+    )
 }
