@@ -9,16 +9,24 @@ class CommandGeneration extends FunSuite {
 
   test("command generation for Flash expressions") {
 
-    val flashExpr = FlashExpression(
-      flash.arguments(
-        (input   := FlashInputAt(new File("reads1.fastq"), new File("reads2.fastq")) ) ::
-        (output  := FlashOutputAt(new File("/tmp/out"), "sample1")               ) :: *[AnyDenotation]
-      ),
-      flash.defaults update (allow_outies(true) :: *[AnyDenotation])
+    val flashExpr = flash(
+      input(FlashInputAt(
+        new File("reads1.fastq"),
+        new File("reads2.fastq")
+      )) ::
+      output(FlashOutputAt(
+        new File("/tmp/out"),
+        "sample1"
+      )) ::
+      *[AnyDenotation],
+      flash.defaults.update(
+        allow_outies(true) ::
+        *[AnyDenotation]
+      ).value
     )
 
     assert {
-      flashExpr.cmd === Seq(
+      flashExpr.toSeq === Seq(
         "flash",
         new File("reads1.fastq").getCanonicalPath,
         new File("reads2.fastq").getCanonicalPath,
@@ -26,9 +34,6 @@ class CommandGeneration extends FunSuite {
         "--output-directory", new File("/tmp/out").getCanonicalPath,
         "--min-overlap", "10",
         "--max-overlap", "65",
-        "--read-len", "100",
-        "--fragment-len", "180",
-        "--fragment-len-stddev", "18",
         "--threads", "1",
         "--allow-outies",
         "--phred-offset", "33",
